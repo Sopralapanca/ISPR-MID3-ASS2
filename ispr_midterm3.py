@@ -116,18 +116,19 @@ def build_model(hp):
     n_blocks = hp.Choice('n_blocks', [1, 2, 3])
     kernel_size = hp.Choice('kernel_size', [3, 7])
     pool_size = hp.Choice('pool_size', [2, 3])
+
     model = create_model(starting_filters, res_unit_per_block, n_blocks, kernel_size, pool_size)
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
     return model
 
 
-callback = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=10, restore_best_weights=True)
+callback = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=5, restore_best_weights=True)
 
 tuner = kt.RandomSearch(
     build_model,
     objective='val_accuracy',
-    max_trials=50)
-tuner.search(train_images, train_labels, epochs=100, batch_size=128, valdiation_split=0.3)
+    max_trials=25)
+tuner.search(train_generator, epochs=50, batch_size=128, validation_data=(test_images, test_labels), callbacks=[callback])
 best_model = tuner.get_best_models()[0]
 
 """Models"""
@@ -143,7 +144,6 @@ print(starting_filters, res_unit_per_block, n_blocks, kernel_size, pool_size)
 model = create_model(starting_filters, res_unit_per_block, n_blocks, kernel_size, pool_size)
 model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-callback = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=10, restore_best_weights=True)
 history = model.fit(train_generator,
                     validation_data=(test_images, test_labels),
                     batch_size=128,
